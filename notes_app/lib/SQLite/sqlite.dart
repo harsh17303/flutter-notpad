@@ -1,7 +1,7 @@
-import 'package:notes_app/JsonModels/note_model.dart';
-import 'package:notes_app/JsonModels/users.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:notes_app/JsonModels/note_model.dart';
+import 'package:notes_app/JsonModels/users.dart';
 
 class DatabaseHelper {
   final databaseName = "notes.db";
@@ -17,28 +17,47 @@ CREATE TABLE notes(
 )
 ''';
 
-  // User table creation query
-  String users =
-      "CREATE TABLE users (usrId INTEGER PRIMARY KEY AUTOINCREMENT, usrName TEXT UNIQUE, usrPassword TEXT)";
+  // User table creation query with the new column profilepic_url
+  String users = '''
+CREATE TABLE users (
+  usrId INTEGER PRIMARY KEY AUTOINCREMENT, 
+  usrName TEXT UNIQUE, 
+  usrPassword TEXT,
+  profilepic_url STRING DEFAULT ''
+)
+''';
 
   // Initialize the database
   Future<Database> initDB() async {
     final databasePath = await getDatabasesPath();
     final path = join(databasePath, databaseName);
 
-    return openDatabase(path, version: 2, onCreate: (db, version) async {
-      await db.execute(users);
-      await db.execute(noteTable);
-    });
+    return openDatabase(
+      path,
+      version: 3, // Incremented version for schema update
+      onCreate: (db, version) async {
+        await db.execute(users);
+        await db.execute(noteTable);
+      },
+      onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < newVersion) {
+          // Add the new column if it does not exist
+          await db.execute('''
+            ALTER TABLE users 
+            ADD COLUMN profilepic_url TEXT DEFAULT ''
+          ''');
+        }
+      },
+    );
   }
 
   // Login method
   Future<bool> login(Users user) async {
     final Database db = await initDB();
-
     var result = await db.rawQuery(
         "SELECT * FROM users WHERE usrName = ? AND usrPassword = ?",
-        [user.usrName, user.usrPassword]);
+        [user.usrName, user.usrPassword]
+    );
     return result.isNotEmpty;
   }
 
@@ -52,8 +71,8 @@ CREATE TABLE notes(
   Future<bool> usernameExists(String username) async {
     final Database db = await initDB();
     var result = await db.rawQuery(
-      'SELECT COUNT(*) FROM users WHERE usrName = ?',
-      [username],
+        'SELECT COUNT(*) FROM users WHERE usrName = ?',
+        [username]
     );
     int count = Sqflite.firstIntValue(result) ?? 0;
     return count > 0;
@@ -63,10 +82,10 @@ CREATE TABLE notes(
   Future<String?> fetchUsernameByUsername(String username) async {
     final Database db = await initDB();
     var result = await db.query(
-      'users',
-      columns: ['usrName'],
-      where: 'usrName = ?',
-      whereArgs: [username],
+        'users',
+        columns: ['usrName'],
+        where: 'usrName = ?',
+        whereArgs: [username]
     );
     if (result.isNotEmpty) {
       return result.first['usrName'] as String?;
@@ -110,8 +129,8 @@ CREATE TABLE notes(
   Future<int> updateNote(String title, String content, int noteId) async {
     final Database db = await initDB();
     return db.rawUpdate(
-      'UPDATE notes SET noteTitle = ?, noteContent = ? WHERE noteId = ?',
-      [title, content, noteId],
+        'UPDATE notes SET noteTitle = ?, noteContent = ? WHERE noteId = ?',
+        [title, content, noteId]
     );
   }
 
@@ -119,19 +138,34 @@ CREATE TABLE notes(
   Future<int> updateNoteCompletionStatus(int noteId, bool isCompleted) async {
     final db = await initDB();
     return await db.update(
-      'notes',
-      {'isCompleted': isCompleted ? 1 : 0},
-      where: 'noteId = ?',
-      whereArgs: [noteId],
+        'notes',
+        {'isCompleted': isCompleted ? 1 : 0},
+        where: 'noteId = ?',
+        whereArgs: [noteId]
     );
   }
-  // Future<void> updateNoteCompletionStatus(int noteId, bool isCompleted) async {
-  //   final db = await initDB();
-  //   await db.update(
-  //     'notes',
-  //     {'isCompleted': isCompleted ? 1 : 0},
-  //     where: 'noteId = ?',
-  //     whereArgs: [noteId],
-  //   );
-  // }
+
+  Future<String?> fetchProfilePic(String username) async {
+    final db = await initDB();
+    final List<Map<String, dynamic>> result = await db.query(
+      'users',
+      columns: ['profilepic_url'],
+      where: 'usrName = ?',
+      whereArgs: [username],
+    );
+    if (result.isNotEmpty) {
+      return result.first['profilepic_url'] as String?;
+    }
+    return null;
+  }
+
+  Future<int> updateProfilePic(String username, String profilePicUrl) async {
+    final db = await initDB();
+    return db.update(
+      'users',
+      {'profilepic_url': profilePicUrl},
+      where: 'usrName = ?',
+      whereArgs: [username],
+    );
+  }
 }

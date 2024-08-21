@@ -1,9 +1,12 @@
 // import 'package:dio/dio.dart';
+import 'package:flutter/animation.dart';
 import 'package:flutter/material.dart';
 import 'package:notes_app/JsonModels/note_model.dart';
 import 'package:notes_app/SQLite/sqlite.dart';
 import 'package:notes_app/view/craeteNote_page.dart';
 import 'package:notes_app/view/login_page.dart';
+import 'package:notes_app/view/navbar.dart';
+import 'package:path/path.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // import '../JsonModels/note_list.dart';
@@ -139,7 +142,7 @@ class _NotePageState extends State<NotePage> {
     }
   }
 
-  Future<void> logout() async {
+  Future<void> logout(BuildContext context) async {
     var sharedPref = await SharedPreferences.getInstance();
     sharedPref.clear(); // Clear all shared preferences
 
@@ -160,20 +163,21 @@ class _NotePageState extends State<NotePage> {
         length: 2,
         child: Scaffold(
           appBar: AppBar(
-            title: Text(username),
+            title: Text('Keeps Note'),
+            // title: Text(username),
             centerTitle: false,
             actions: [
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  shape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(10)),
-                  ),
-                  backgroundColor: Colors.deepPurple,
-                ),
-                onPressed: logout,
-                label: const Text("Logout"),
-                icon: const Icon(Icons.logout),
-              ),
+              // ElevatedButton.icon(
+              //   style: ElevatedButton.styleFrom(
+              //     shape: const RoundedRectangleBorder(
+              //       borderRadius: BorderRadius.all(Radius.circular(10)),
+              //     ),
+              //     backgroundColor: Colors.deepPurple,
+              //   ),
+              //   onPressed: (){logout(context);},
+              //   label: const Text("Logout"),
+              //   icon: const Icon(Icons.logout),
+              // ),
               const Padding(padding: EdgeInsets.symmetric(horizontal: 10))
             ],
             bottom: const TabBar(
@@ -183,6 +187,7 @@ class _NotePageState extends State<NotePage> {
               ],
             ),
           ),
+          drawer: Navbar(),
           body: TabBarView(
             children: [
               _buildNoteList(_pendingNotes),
