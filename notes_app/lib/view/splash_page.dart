@@ -23,7 +23,7 @@ class SplashPageState extends State<SplashPage> {
     return Scaffold(
       body: Container(
         color: Colors.black,
-        child: Center(
+        child: const Center(
           child: Text(
             "Hi there",
             style: TextStyle(fontSize: 30, color: Colors.white),
