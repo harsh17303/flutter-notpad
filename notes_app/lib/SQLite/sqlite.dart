@@ -79,6 +79,7 @@ CREATE TABLE users (
   }
 
   // Fetch username by username
+
   Future<String?> fetchUsernameByUsername(String username) async {
     final Database db = await initDB();
     var result = await db.query(
@@ -96,6 +97,7 @@ CREATE TABLE users (
   // CRUD Methods
 
   // Create Note
+
   Future<void> createNote(NoteModel note, String username) async {
     final db = await initDB();
     await db.insert(
@@ -106,6 +108,7 @@ CREATE TABLE users (
   }
 
   // Get notes by username
+
   Future<List<NoteModel>> getNotes(String username) async {
     final db = await initDB();
     final List<Map<String, dynamic>> maps = await db.query(

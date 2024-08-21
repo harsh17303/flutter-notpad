@@ -1,15 +1,10 @@
-// import 'package:dio/dio.dart';
-import 'package:flutter/animation.dart';
 import 'package:flutter/material.dart';
 import 'package:notes_app/JsonModels/note_model.dart';
 import 'package:notes_app/SQLite/sqlite.dart';
 import 'package:notes_app/view/craeteNote_page.dart';
 import 'package:notes_app/view/login_page.dart';
 import 'package:notes_app/view/navbar.dart';
-import 'package:path/path.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-// import '../JsonModels/note_list.dart';
 
 class NotePage extends StatefulWidget {
   const NotePage({super.key});
@@ -24,37 +19,23 @@ class _NotePageState extends State<NotePage> {
   List<NoteModel> _notes = [];
   List<NoteModel> _pendingNotes = [];
   List<NoteModel> _completedNotes = [];
-  // List<NoteList> _apiResponse=[];
+  TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  bool showCancel=false;
+  FocusNode focusNode=FocusNode();
 
   @override
   void initState() {
     super.initState();
     fetchAndDisplayUsername();
-
-    // getHttp();
+    focusNode.addListener(() {
+      if(!focusNode.hasFocus)
+        showCancel=false;
+      else
+        showCancel=true;
+    },);
   }
-
-  // void getHttp() async {
-  //   try {
-  //     final response = await Dio().get(
-  //         "https://jsonplaceholder.typicode.com/todos");
-  //     print(response);
-  //     // if(response!=null){
-  //     if(response.statusCode==200){
-
-  //       // List< Map<String, dynamic>> res=jsonDecode();
-
-  //       final pars= response.data.forEach((val){
-  //         print(val);
-  //         NoteList.fromJson(val);
-  //       });
-  //       // print(pars);
-  //     }
-  //   }catch(e, stack) {
-  //     print(e);
-  //     print(stack);
-  //   }
-  // }
 
   Future<void> fetchAndDisplayUsername() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -82,8 +63,17 @@ class _NotePageState extends State<NotePage> {
 
   void _filterNotes() {
     setState(() {
-      _pendingNotes = _notes.where((note) => !note.isCompleted).toList();
-      _completedNotes = _notes.where((note) => note.isCompleted).toList();
+      if (_searchQuery.isNotEmpty) {
+        _pendingNotes = _notes
+            .where((note) => !note.isCompleted && note.noteTitle.toLowerCase().contains(_searchQuery.toLowerCase()))
+            .toList();
+        _completedNotes = _notes
+            .where((note) => note.isCompleted && note.noteTitle.toLowerCase().contains(_searchQuery.toLowerCase()))
+            .toList();
+      } else {
+        _pendingNotes = _notes.where((note) => !note.isCompleted).toList();
+        _completedNotes = _notes.where((note) => note.isCompleted).toList();
+      }
     });
   }
 
@@ -149,7 +139,7 @@ class _NotePageState extends State<NotePage> {
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (context) => const LoginPage()),
-      (Route<dynamic> route) => false,
+          (Route<dynamic> route) => false,
     );
   }
 
@@ -161,52 +151,77 @@ class _NotePageState extends State<NotePage> {
       },
       child: DefaultTabController(
         length: 2,
-        child: Scaffold(
-          appBar: AppBar(
-            title: Text('Keeps Note'),
-            // title: Text(username),
-            centerTitle: false,
-            actions: [
-              // ElevatedButton.icon(
-              //   style: ElevatedButton.styleFrom(
-              //     shape: const RoundedRectangleBorder(
-              //       borderRadius: BorderRadius.all(Radius.circular(10)),
-              //     ),
-              //     backgroundColor: Colors.deepPurple,
-              //   ),
-              //   onPressed: (){logout(context);},
-              //   label: const Text("Logout"),
-              //   icon: const Icon(Icons.logout),
-              // ),
-              const Padding(padding: EdgeInsets.symmetric(horizontal: 10))
-            ],
-            bottom: const TabBar(
-              tabs: [
-                Tab(text: "Pending"),
-                Tab(text: "Completed"),
+        child: GestureDetector(onTap: (){
+          FocusManager.instance.primaryFocus?.unfocus();
+        } ,
+          child: Scaffold(
+            appBar: AppBar(
+              title: TextField(
+                focusNode: focusNode,
+                controller: _searchController,
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: Colors.white10,
+                  // icon: Icon(Icons.search),
+                  hintText: 'Search notes...',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(30.0)), // Adds border radius
+                    borderSide: BorderSide.none, // Removes the default border
+                  ),
+                  // border: InputBorder.none,
+                  hintStyle: TextStyle(color: Colors.white38),
+                ),
+                style: TextStyle(color: Colors.white),
+                onChanged: (query) {
+                  setState(() {
+                    _searchQuery = query;
+                    _filterNotes(); // Re-filter notes based on the search query
+                  });
+                },
+              ),
+              centerTitle: false,
+              actions: [
+                if (showCancel)
+                  IconButton(
+                  icon: Icon(Icons.clear),
+                  onPressed: () {
+                    FocusManager.instance.primaryFocus?.unfocus();
+                    setState(() {
+                      _searchController.clear();
+                      _searchQuery = '';
+                      _filterNotes(); // Clear the search and show all notes
+                    });
+                  },
+                ),
+              ],
+              bottom: const TabBar(
+                tabs: [
+                  Tab(text: "Pending"),
+                  Tab(text: "Completed"),
+                ],
+              ),
+            ),
+            drawer: Navbar(),
+            body: TabBarView(
+              children: [
+                _buildNoteList(_pendingNotes),
+                _buildNoteList(_completedNotes),
               ],
             ),
-          ),
-          drawer: Navbar(),
-          body: TabBarView(
-            children: [
-              _buildNoteList(_pendingNotes),
-              _buildNoteList(_completedNotes),
-            ],
-          ),
-          floatingActionButton: FloatingActionButton(
-            shape: const RoundedRectangleBorder(
-              borderRadius: BorderRadius.all(Radius.circular(50)),
+            floatingActionButton: FloatingActionButton(
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(Radius.circular(50)),
+              ),
+              onPressed: () {
+                Navigator.of(context)
+                    .push(MaterialPageRoute(
+                    builder: (context) => const CraeteNote()))
+                    .then((_) {
+                  _fetchNotes(); // Refresh the notes list after returning from CreateNotePage
+                });
+              },
+              child: const Icon(Icons.add),
             ),
-            onPressed: () {
-              Navigator.of(context)
-                  .push(MaterialPageRoute(
-                      builder: (context) => const CraeteNote()))
-                  .then((_) {
-                _fetchNotes(); // Refresh the notes list after returning from CreateNotePage
-              });
-            },
-            child: const Icon(Icons.add),
           ),
         ),
       ),
@@ -271,7 +286,6 @@ class _NotePageState extends State<NotePage> {
                           );
                         });
                   },
-                  // => _deleteNote(noteId),
                 ),
               ],
             ),
@@ -281,19 +295,15 @@ class _NotePageState extends State<NotePage> {
                 context: context,
                 builder: (context) {
                   return AlertDialog(
-                    title: Text(note.noteTitle),
+                    backgroundColor: Colors.deepPurple,
+                    title: Text(note.noteTitle,
+                        style: TextStyle(
+                            fontWeight: FontWeight.w900, fontSize: 24)),
                     content: Text(note.noteContent),
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.of(context).pop(),
                         child: const Text('Close'),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                          _deleteNote(noteId);
-                        },
-                        child: const Text('Delete'),
                       ),
                     ],
                   );
@@ -306,6 +316,309 @@ class _NotePageState extends State<NotePage> {
     );
   }
 }
+
+
+// // import 'package:dio/dio.dart';
+// import 'package:flutter/material.dart';
+// import 'package:notes_app/JsonModels/note_model.dart';
+// import 'package:notes_app/SQLite/sqlite.dart';
+// import 'package:notes_app/view/craeteNote_page.dart';
+// import 'package:notes_app/view/login_page.dart';
+// import 'package:notes_app/view/navbar.dart';
+// import 'package:path/path.dart';
+// import 'package:shared_preferences/shared_preferences.dart';
+//
+// // import '../JsonModels/note_list.dart';
+//
+// class NotePage extends StatefulWidget {
+//   const NotePage({super.key});
+//
+//   @override
+//   State<NotePage> createState() => _NotePageState();
+// }
+//
+// class _NotePageState extends State<NotePage> {
+//   String username = "Loading...";
+//   final DatabaseHelper dbHelper = DatabaseHelper();
+//   List<NoteModel> _notes = [];
+//   List<NoteModel> _pendingNotes = [];
+//   List<NoteModel> _completedNotes = [];
+//   // List<NoteList> _apiResponse=[];
+//
+//   @override
+//   void initState() {
+//     super.initState();
+//     fetchAndDisplayUsername();
+//
+//     // getHttp();
+//   }
+//
+//   // void getHttp() async {
+//   //   try {
+//   //     final response = await Dio().get(
+//   //         "https://jsonplaceholder.typicode.com/todos");
+//   //     print(response);
+//   //     // if(response!=null){
+//   //     if(response.statusCode==200){
+//
+//   //       // List< Map<String, dynamic>> res=jsonDecode();
+//
+//   //       final pars= response.data.forEach((val){
+//   //         print(val);
+//   //         NoteList.fromJson(val);
+//   //       });
+//   //       // print(pars);
+//   //     }
+//   //   }catch(e, stack) {
+//   //     print(e);
+//   //     print(stack);
+//   //   }
+//   // }
+//
+//   Future<void> fetchAndDisplayUsername() async {
+//     SharedPreferences prefs = await SharedPreferences.getInstance();
+//     String? storedUsername = prefs.getString('username');
+//
+//     if (storedUsername != null) {
+//       setState(() {
+//         username = storedUsername;
+//       });
+//       _fetchNotes(); // Fetch notes after getting username
+//     } else {
+//       setState(() {
+//         username = "Username not found";
+//       });
+//     }
+//   }
+//
+//   Future<void> _fetchNotes() async {
+//     final notes = await dbHelper.getNotes(username); // Pass the username
+//     setState(() {
+//       _notes = notes;
+//     });
+//     _filterNotes();
+//   }
+//
+//   void _filterNotes() {
+//     setState(() {
+//       _pendingNotes = _notes.where((note) => !note.isCompleted).toList();
+//       _completedNotes = _notes.where((note) => note.isCompleted).toList();
+//     });
+//   }
+//
+//   Future<void> _deleteNote(int id) async {
+//     await dbHelper.deleteNote(id);
+//     _fetchNotes(); // Refresh the list of notes
+//   }
+//
+//   Future<void> _updateNoteCompletionStatus(int noteId, bool isCompleted) async {
+//     await dbHelper.updateNoteCompletionStatus(noteId, isCompleted);
+//     _fetchNotes(); // Refresh the list of notes
+//   }
+//
+//   Future<void> _editNote(
+//       BuildContext context, NoteModel note, String username) async {
+//     final titleController = TextEditingController(text: note.noteTitle);
+//     final contentController = TextEditingController(text: note.noteContent);
+//
+//     final result = await showDialog<String>(
+//       context: context,
+//       builder: (context) => AlertDialog(
+//         title: const Text('Edit Note'),
+//         content: Column(
+//           mainAxisSize: MainAxisSize.min,
+//           children: [
+//             TextField(
+//               controller: titleController,
+//               decoration: const InputDecoration(labelText: 'Title'),
+//             ),
+//             TextField(
+//               controller: contentController,
+//               decoration: const InputDecoration(labelText: 'Content'),
+//               maxLines: 5,
+//             ),
+//           ],
+//         ),
+//         actions: [
+//           TextButton(
+//             onPressed: () => Navigator.pop(context, 'Cancel'),
+//             child: const Text('Cancel'),
+//           ),
+//           TextButton(
+//             onPressed: () async {
+//               await dbHelper.updateNote(
+//                   titleController.text, contentController.text, note.noteId!);
+//               Navigator.pop(context, 'Save');
+//             },
+//             child: const Text('Save'),
+//           ),
+//         ],
+//       ),
+//     );
+//
+//     if (result == 'Save') {
+//       _fetchNotes(); // Refresh the list of notes
+//     }
+//   }
+//
+//   Future<void> logout(BuildContext context) async {
+//     var sharedPref = await SharedPreferences.getInstance();
+//     sharedPref.clear(); // Clear all shared preferences
+//
+//     Navigator.pushAndRemoveUntil(
+//       context,
+//       MaterialPageRoute(builder: (context) => const LoginPage()),
+//       (Route<dynamic> route) => false,
+//     );
+//   }
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     return WillPopScope(
+//       onWillPop: () async {
+//         return false; // Prevent back navigation
+//       },
+//       child: DefaultTabController(
+//         length: 2,
+//         child: Scaffold(
+//           appBar: AppBar(
+//             title: Text('Keeps Note'),
+//             // title: Text(username),
+//             centerTitle: false,
+//             actions: const [
+//               // ElevatedButton.icon(
+//               //   style: ElevatedButton.styleFrom(
+//               //     shape: const RoundedRectangleBorder(
+//               //       borderRadius: BorderRadius.all(Radius.circular(10)),
+//               //     ),
+//               //     backgroundColor: Colors.deepPurple,
+//               //   ),
+//               //   onPressed: (){logout(context);},
+//               //   label: const Text("Logout"),
+//               //   icon: const Icon(Icons.logout),
+//               // ),
+//               Padding(padding: EdgeInsets.symmetric(horizontal: 10))
+//             ],
+//             bottom: const TabBar(
+//               tabs: [
+//                 Tab(text: "Pending"),
+//                 Tab(text: "Completed"),
+//               ],
+//             ),
+//           ),
+//           drawer: Navbar(),
+//           body: TabBarView(
+//             children: [
+//               _buildNoteList(_pendingNotes),
+//               _buildNoteList(_completedNotes),
+//             ],
+//           ),
+//           floatingActionButton: FloatingActionButton(
+//             shape: const RoundedRectangleBorder(
+//               borderRadius: BorderRadius.all(Radius.circular(50)),
+//             ),
+//             onPressed: () {
+//               Navigator.of(context)
+//                   .push(MaterialPageRoute(
+//                       builder: (context) => const CraeteNote()))
+//                   .then((_) {
+//                 _fetchNotes(); // Refresh the notes list after returning from CreateNotePage
+//               });
+//             },
+//             child: const Icon(Icons.add),
+//           ),
+//         ),
+//       ),
+//     );
+//   }
+//
+//   Widget _buildNoteList(List<NoteModel> notes) {
+//     return ListView.builder(
+//       itemCount: notes.length,
+//       itemBuilder: (context, index) {
+//         final note = notes[index];
+//         final noteId = note.noteId ?? 0;
+//
+//         return Card(
+//           color: Colors.deepPurple,
+//           margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+//           child: ListTile(
+//             leading: Checkbox(
+//               value: note.isCompleted,
+//               onChanged: (bool? value) async {
+//                 await _updateNoteCompletionStatus(noteId, value ?? false);
+//               },
+//             ),
+//             title: Text(note.noteTitle),
+//             subtitle: Text(
+//               note.noteContent,
+//               maxLines: 1,
+//               overflow: TextOverflow.ellipsis,
+//             ),
+//             trailing: Row(
+//               mainAxisSize: MainAxisSize.min,
+//               children: [
+//                 IconButton(
+//                   icon: const Icon(Icons.edit, color: Colors.white),
+//                   onPressed: () => _editNote(context, note, username),
+//                 ),
+//                 IconButton(
+//                   icon: const Icon(Icons.delete, color: Colors.white),
+//                   onPressed: () {
+//                     showDialog(
+//                         context: context,
+//                         builder: (BuildContext context) {
+//                           return AlertDialog(
+//                             title: const Text('Confirm delete'),
+//                             content: Text(
+//                                 'Are you sure you want to delete ${note.noteTitle} note?'),
+//                             actions: [
+//                               TextButton(
+//                                 onPressed: () {
+//                                   Navigator.of(context).pop();
+//                                 },
+//                                 child: const Text('Cancel'),
+//                               ),
+//                               TextButton(
+//                                 onPressed: () {
+//                                   _deleteNote(noteId);
+//                                   Navigator.of(context).pop();
+//                                 },
+//                                 child: const Text('delete'),
+//                               ),
+//                             ],
+//                           );
+//                         });
+//                   },
+//                   // => _deleteNote(noteId),
+//                 ),
+//               ],
+//             ),
+//             onTap: () {
+//               // Show the note details in a dialog
+//               showDialog(
+//                 context: context,
+//                 builder: (context) {
+//                   return AlertDialog(
+//                     backgroundColor: Colors.deepPurple,
+//                     title: Text(note.noteTitle, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 24),),
+//                     content: Text(note.noteContent),
+//                     actions: [
+//                       TextButton(
+//                         onPressed: () => Navigator.of(context).pop(),
+//                         child: const Text('Close'),
+//                       ),
+//                     ],
+//                   );
+//                 },
+//               );
+//             },
+//           ),
+//         );
+//       },
+//     );
+//   }
+// }
 
 
 // API call code-------------------------------------------------------------------------------------------------------------------------------------------------------------------

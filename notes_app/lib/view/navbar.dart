@@ -76,12 +76,12 @@ class _NavbarState extends State<Navbar> {
                     child: CircleAvatar(
                       backgroundImage: picPath.isNotEmpty
                           ? FileImage(File(picPath))
-                          : AssetImage('assets/image/defaultProfile.jpeg') as ImageProvider,
+                          : const AssetImage('assets/image/defaultProfile.jpeg') as ImageProvider,
                     ),
                   ),
                 ),
 
-              Text(username ?? 'Username not found!'),
+              Text(username ?? 'Username not found!', style: TextStyle( color: Colors.deepPurple.shade300, fontSize: 24),),
               SizedBox(height: 20,),
               ListTile(
                 leading: const Icon(Icons.home),
@@ -94,6 +94,7 @@ class _NavbarState extends State<Navbar> {
                 leading: const Icon(Icons.person),
                 title: const Text("Profile"),
                 onTap: () {
+                  Navigator.of(context).pop();
                   Navigator.of(context).push(
                       MaterialPageRoute(builder: (context) => const ProfilePage()));
                 },
