@@ -124,7 +124,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     "Edit Profile Pic",
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: Colors.deepPurple.shade200,
+                      color: Colors.purple.shade300,
                       fontSize: 20,
                     ),
                   ),
