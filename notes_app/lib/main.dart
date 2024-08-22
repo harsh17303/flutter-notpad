@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:notes_app/view/splash_page.dart';
 
 void main() {
@@ -11,13 +12,16 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return GetMaterialApp(
         debugShowCheckedModeBanner: false, // Disable the debug banner
         title: 'Flutter Login and Signup',
-        theme: ThemeData(
-          primarySwatch: Colors.blue,
-          brightness: Brightness.dark,
-        ),
+        theme: ThemeData.light(),
+        themeMode: ThemeMode.light,
+        darkTheme: ThemeData.dark(),
+        // ThemeData(
+        //   primarySwatch: Colors.blue,
+        //   brightness: Brightness.dark,
+        // ),
         home: SplashPage());
   }
 }
