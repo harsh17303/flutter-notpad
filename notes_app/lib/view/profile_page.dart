@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:get/route_manager.dart';
 import 'package:notes_app/SQLite/sqlite.dart';
 import 'package:notes_app/view/login_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -109,11 +110,11 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                   subtitle: const Text(
                     'username',
-                    style: TextStyle(color: Colors.white54),
+                    // style: TextStyle(color: Colors.white54),
                   ),
                 ),
                 const Divider(
-                  color: Colors.white54,
+                  // color: Colors.white54,
                   indent: 18.0,
                   endIndent: 18.0,
                   height: 10.0,
@@ -124,13 +125,63 @@ class _ProfilePageState extends State<ProfilePage> {
                     "Edit Profile Pic",
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: Colors.purple.shade300,
+                      color: Colors.purple.shade200,
                       fontSize: 20,
                     ),
                   ),
                   subtitle: const Text(
                     'profile picture',
-                    style: TextStyle(color: Colors.white54),
+                    // style: TextStyle(color: Colors.white54),
+                  ),
+                ),
+                const Divider(
+                  // color: Colors.white54,
+                  indent: 18.0,
+                  endIndent: 18.0,
+                  height: 10.0,
+                ),
+                ListTile(
+                  leading: IconButton(onPressed: (){
+                    Get.bottomSheet(
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.deepPurple,
+                          borderRadius: BorderRadius.only(topLeft:Radius.circular(30), topRight: Radius.circular(30)),
+                        ),
+                        child: Column(
+                          children: [
+                            ListTile(
+                              leading: Icon(Icons.light_mode, color: Colors.white,),
+                              title: Text('Light Mode', style: TextStyle(color: Colors.white),),
+                              onTap: (){
+                                Get.changeTheme(ThemeData.light());
+                                Get.back();
+                              } ,
+                            ),
+                            ListTile(
+                              leading: Icon(Icons.dark_mode, color: Colors.white),
+                              title: Text('Dark Mode', style: TextStyle(color: Colors.white)),
+                              onTap: (){
+                                Get.changeTheme(ThemeData.dark());
+                                Get.back();
+                              } ,
+                            )
+                          ],
+                        ),
+                      )
+                    );
+                  }, icon: const Icon(Icons.settings)),
+                  title: Text(
+                    "Theme",
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.purple.shade200,
+                      fontSize: 20,
+                    ),
+                  ),
+                  subtitle: const Text(
+                    'Light, dark theme',
+                    // style: TextStyle(color: Colors.white54),
                   ),
                 ),
                 const SizedBox(height: 30),

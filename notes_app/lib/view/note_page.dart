@@ -1,4 +1,6 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:get/route_manager.dart';
 import 'package:notes_app/JsonModels/note_model.dart';
 import 'package:notes_app/SQLite/sqlite.dart';
 import 'package:notes_app/view/craeteNote_page.dart';
@@ -120,6 +122,7 @@ class _NotePageState extends State<NotePage> {
               await dbHelper.updateNote(
                   titleController.text, contentController.text, note.noteId!);
               Navigator.pop(context, 'Save');
+              Get.snackbar("Updated", "successfully update the ${note.noteTitle} note", icon: Icon(Icons.check_circle, color: Colors.green,));
             },
             child: const Text('Save'),
           ),
@@ -159,7 +162,7 @@ class _NotePageState extends State<NotePage> {
               title: TextField(
                 focusNode: focusNode,
                 controller: _searchController,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   filled: true,
                   fillColor: Colors.white10,
                   // icon: Icon(Icons.search),
@@ -169,9 +172,9 @@ class _NotePageState extends State<NotePage> {
                     borderSide: BorderSide.none, // Removes the default border
                   ),
                   // border: InputBorder.none,
-                  hintStyle: TextStyle(color: Colors.white38),
+                  // hintStyle: TextStyle(color: Colors.white38),
                 ),
-                style: TextStyle(color: Colors.white),
+                // style: TextStyle(color: Colors.white),
                 onChanged: (query) {
                   setState(() {
                     _searchQuery = query;
@@ -194,6 +197,7 @@ class _NotePageState extends State<NotePage> {
                   },
                 ),
               ],
+
               bottom: const TabBar(
                 tabs: [
                   Tab(text: "Pending"),
@@ -240,16 +244,18 @@ class _NotePageState extends State<NotePage> {
           margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
           child: ListTile(
             leading: Checkbox(
+              // checkColor: Colors.white,
               value: note.isCompleted,
               onChanged: (bool? value) async {
                 await _updateNoteCompletionStatus(noteId, value ?? false);
               },
             ),
-            title: Text(note.noteTitle),
+            title: Text(note.noteTitle, style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),),
             subtitle: Text(
               note.noteContent,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
+              style: TextStyle(color: Colors.white70,),
             ),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
@@ -278,9 +284,10 @@ class _NotePageState extends State<NotePage> {
                               TextButton(
                                 onPressed: () {
                                   _deleteNote(noteId);
+                                  Get.snackbar('deleted', 'successfully deleted ${note.noteTitle}', icon: Icon(Icons.check_circle, color: Colors.green,));
                                   Navigator.of(context).pop();
                                 },
-                                child: const Text('delete'),
+                                child: const Text('delete', style: TextStyle(color: Colors.red)),
                               ),
                             ],
                           );
@@ -295,7 +302,7 @@ class _NotePageState extends State<NotePage> {
                 context: context,
                 builder: (context) {
                   return AlertDialog(
-                    backgroundColor: Colors.deepPurple,
+                    // backgroundColor: Colors.deepPurple,
                     title: Text(note.noteTitle,
                         style: TextStyle(
                             fontWeight: FontWeight.w900, fontSize: 24)),
