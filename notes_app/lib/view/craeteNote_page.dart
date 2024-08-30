@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/route_manager.dart';
 import 'package:notes_app/JsonModels/note_model.dart';
 import 'package:notes_app/SQLite/sqlite.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -43,12 +44,15 @@ class _CraeteNoteState extends State<CraeteNote> {
 
       await dbHelper.createNote(newNote, username); // Pass username as the second argument
 
+      Get.snackbar( "Created", "successfully created note.", icon: Icon(Icons.check_circle, color: Colors.green,));
+
       Navigator.pop(context); // Return to the previous page
     } else {
       // Show error message
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Title and content cannot be empty')),
-      );
+      // ScaffoldMessenger.of(context).showSnackBar(
+      //   const SnackBar(content: Text('Title and content cannot be empty')),
+      // );
+      Get.snackbar( "Error", "Title and content cannot be empty", icon: Icon(Icons.error, color: Colors.red,));
     }
   }
 
